@@ -1,0 +1,52 @@
+FROM 10.45.80.1/public/centos7_base
+MAINTAINER zcm
+
+ADD ./zcm-resource-0.0.1-SNAPSHOT.jar /root
+ADD ./application.properties /root
+ADD ./start.sh /root
+ADD ./run.sh  /root
+VOLUME ["/zcm/zcm-resource/logs/"]
+RUN curl -k "sftp://10.45.80.1/v1/zcm/jdk1.8.0_73.tar.gz" --user "public_sftp:public_sftp" -o /root/jdk1.8.0_73.tar.gz \
+    && cd /root \
+    && tar zxvf /root/jdk1.8.0_73.tar.gz \
+    && rm /root/jdk1.8.0_73.tar.gz \
+    && yum install  ansible.noarch -y \
+    && yum install openssh-clients.x86_64 -y \
+    && yum clean all
+
+ENV JAVA_HOME /root/jdk1.8.0_73
+ENV PATH $JAVA_HOME/bin:.:$PATH
+EXPOSE 8081
+ENTRYPOINT ["/root/run.sh"]
+------------------------------------------------------------------------------------------------------------------
+FROM 10.45.80.1/public/anapsix-alpine-java:8u121b13_server-jre
+
+MAINTAINER ZTEsoft Tang Rui
+
+ADD ./zcm-resource-0.0.1-SNAPSHOT.jar /zcm/zcm-resource/
+ADD ./application.properties /zcm/zcm-resource/
+ADD ./start.sh /root/
+VOLUME ["/zcm/zcm-resource/logs/"]
+RUN chmod 777 /root/start.sh
+
+CMD ["/root/start.sh"]
+
+-----------------------------------------------------------------------------------------------------------------
+//根据centos7_base自定义一个基础镜像,配置好各种环境依赖
+FROM 10.45.80.1/public/centos7_base
+MAINTAINER tangrui1@ztesoft.com
+
+RUN curl -k "sftp://10.45.80.1/v1/zcm/jdk1.8.0_73.tar.gz" --user "public_sftp:public_sftp" -o /root/jdk1.8.0_73.tar.gz \
+    && curl -k "sftp://10.45.80.1/v1/zcm/apache-maven-3.3.9.tar.gz" --user "public_sftp:public_sftp" -o /root/apache-maven-3.3.9.tar.gz \
+    && cd /root \
+    && tar zxvf /root/jdk1.8.0_73.tar.gz \
+    && rm /root/jdk1.8.0_73.tar.gz \
+    && tar zxvf /root/apache-maven-3.3.9.tar.gz \
+    && rm /root/apache-maven-3.3.9.tar.gz \
+    && yum install git -y \
+    && yum clean all
+    
+ENV JAVA_HOME /root/jdk1.8.0_73
+ENV MAVEN_HOME /root/apache-maven-3.3.9
+ENV PATH $JAVA_HOME/bin:$MAVEN_HOME/bin:.:$PATH
+---------------------------------------------------------------------------------------------------------------

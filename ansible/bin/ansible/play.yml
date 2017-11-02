@@ -1,0 +1,6 @@
+- hosts: '{{target}}'
+  user: root
+  gather_facts: false
+  tasks:
+  - name: gather netstat metrics
+    shell: netstat -ant
